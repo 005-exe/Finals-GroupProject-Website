@@ -9,8 +9,8 @@ header {
     border-bottom: 2px solid black;
     z-index: 10;
     opacity: 1;
-    background-color: white;
-    background: white;
+    background-color: black;
+    background: #faf3e3; /*#231708; */
     padding: 30px;
     display: flex;
     flex-direction: row;
@@ -19,14 +19,45 @@ header {
     top: 0;  /* Stick to the top */
 }
 
-header h1 {
+header h1 { 
     white-space: nowrap;  /* Prevent text from wrapping */
+    flex-shrink: 0;
+}
+
+header h1.logo { 
+    margin: 0;
+}
+
+header h1.logo a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #1e90ff;
+}
+
+header h1.logo img { /* For fixed sizing of the logo */
+    width: 210px;
+    height: 75px;
+    object-fit: cover;
+    margin-right: 10px;
+    /* To distinguish logo in nav bar */
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+header h1.logo img:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 nav {
     display: flex;
     gap: 30px;
     width: 100%;  /* Take full width */
+    margin-left: 20px;
 }
 
 nav:not(header nav) {
@@ -66,7 +97,7 @@ nav:not(header nav) {
 /*#endregion PAGE SECTION*/
 
 #home {
-    background-color: white;
+    background-color: #F5F1E8; /*#3c260f; */
 }
 /*#region HOME PAGE*/
 /*#region HERO BANNER*/
