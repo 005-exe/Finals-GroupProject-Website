@@ -1,21 +1,35 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    const navLinks = document.querySelectorAll('header nav a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(event) {
-            event.preventDefault();
-            const targetId = this.getAttribute('href');
-            const allSections = document.querySelectorAll('.page-section');
-            allSections.forEach(section => {
-                section.classList.remove('active');
-            });
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-        });
+    const updateHeaderUnderline = (activeSectionId) => {
+    document.querySelectorAll('header nav a').forEach(a => {
+        a.classList.toggle('nav-current', a.getAttribute('href') === activeSectionId);
     });
-    
+    };
+
+    const navLinks = document.querySelectorAll('nav a');
+    navLinks.forEach(link => {
+    link.addEventListener('click', function (event) {
+        const targetId = this.getAttribute('href');
+        const targetSection = document.getElementById(targetId);
+
+        // If it's not one of your page sections (ex: #coffee or https://...), don't block it
+        if (!targetSection) return;
+
+        event.preventDefault();
+
+        document.querySelectorAll('.page-section').forEach(section => {
+        section.classList.remove('active');
+        });
+
+        targetSection.classList.add('active');
+        updateHeaderUnderline(targetId);
+    });
+    });
+
+    // on load: underline the currently active section in the header
+    const activeSection = document.querySelector('.page-section.active');
+    if (activeSection) updateHeaderUnderline(activeSection.id);
+        
     const categoryLinks = document.querySelectorAll('.menu-sidebar a');
     const searchInput = document.querySelector('.menu-search');
     const menuSections = document.querySelectorAll('.menu-section');
@@ -23,6 +37,95 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (categoryLinks.length > 0 && searchInput) {
         
+        function filterByCategory(category) {
+            const subcategoryHeaders = document.querySelectorAll('.subcategory-header');
+            const menuGrids = document.querySelectorAll('.menu-grid');
+            
+            if (category.includes('-')) {
+                const [mainCategory, subCategory] = category.split('-');
+                
+                // Show only the matching main category section
+                menuSections.forEach(section => {
+                    const sectionCategory = section.getAttribute('data-category');
+                    if (sectionCategory === mainCategory) {
+                        section.style.display = '';
+                        
+                        // Update the category header to show subcategory
+                        const categoryHeader = section.querySelector('.category-header');
+                        if (categoryHeader) {
+                            const originalHeader = categoryHeader.getAttribute('data-original') || categoryHeader.textContent;
+                            if (!categoryHeader.getAttribute('data-original')) {
+                                categoryHeader.setAttribute('data-original', originalHeader);
+                            }
+                            
+                            // Format subcategory name
+                            const formattedSubCategory = subCategory
+                                .split(/(?=[A-Z])/).join(' ')  // Split camelCase
+                                .replace(/-/g, ' ')             // Replace hyphens
+                                .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize
+                            
+                            categoryHeader.textContent = `${originalHeader} - ${formattedSubCategory}`;
+                        }
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                // Hide all subcategory headers and grids first
+                subcategoryHeaders.forEach(header => header.style.display = 'none');
+                menuGrids.forEach(grid => grid.style.display = 'none');
+                
+                // Show only items matching the subcategory and their grids
+                menuItems.forEach(item => {
+                    const itemCategory = item.getAttribute('data-category');
+                    const itemSubcategory = item.getAttribute('data-subcategory');
+                    
+                    if (itemCategory === mainCategory && itemSubcategory === subCategory) {
+                        item.style.display = '';
+                        // Show the parent grid
+                        const parentGrid = item.closest('.menu-grid');
+                        if (parentGrid) parentGrid.style.display = '';
+                        // Show the preceding subcategory header
+                        const prevHeader = parentGrid.previousElementSibling;
+                        if (prevHeader && prevHeader.classList.contains('subcategory-header')) {
+                            prevHeader.style.display = '';
+                        }
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            } else {
+                // Show all for main category
+                menuSections.forEach(section => {
+                    const sectionCategory = section.getAttribute('data-category');
+                    if (sectionCategory === category) {
+                        section.style.display = '';
+                        
+                        // Restore original header
+                        const categoryHeader = section.querySelector('.category-header');
+                        if (categoryHeader) {
+                            const originalHeader = categoryHeader.getAttribute('data-original');
+                            if (originalHeader) {
+                                categoryHeader.textContent = originalHeader;
+                            }
+                        }
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                // Show all subcategory headers and grids for this category
+                subcategoryHeaders.forEach(header => header.style.display = '');
+                menuGrids.forEach(grid => grid.style.display = '');
+                
+                menuItems.forEach(item => {
+                    const itemCategory = item.getAttribute('data-category');
+                    item.style.display = itemCategory === category ? '' : 'none';
+                });
+            }
+        }
+        
+        // ADD THESE EVENT LISTENERS THAT WERE MISSING:
         categoryLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -43,27 +146,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-
-        function filterByCategory(category) {
-            menuSections.forEach(section => {
-                const sectionCategory = section.getAttribute('data-category');
-                
-                if (sectionCategory === category) {
-                    section.style.display = '';  
-                } else {
-                    section.style.display = 'none';  
-                }
-            });
-        }
-        
-
         function filterBySearch(searchText) {
-
             menuSections.forEach(section => {
                 section.style.display = '';
             });
             
-
             menuItems.forEach(item => {
                 const itemName = item.getAttribute('data-name').toLowerCase();
                 
@@ -74,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-
             menuSections.forEach(section => {
                 const visibleItems = section.querySelectorAll('.menu-item:not([style*="display: none"])');
                 if (visibleItems.length === 0) {
@@ -84,11 +170,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function showAllSections() {
+            const subcategoryHeaders = document.querySelectorAll('.subcategory-header');
+            const menuGrids = document.querySelectorAll('.menu-grid');
+            
             menuSections.forEach(section => {
                 section.style.display = '';
+                
+                // Restore original headers
+                const categoryHeader = section.querySelector('.category-header');
+                if (categoryHeader) {
+                    const originalHeader = categoryHeader.getAttribute('data-original');
+                    if (originalHeader) {
+                        categoryHeader.textContent = originalHeader;
+                    }
+                }
             });
             menuItems.forEach(item => {
                 item.style.display = '';
+            });
+            subcategoryHeaders.forEach(header => {
+                header.style.display = '';
+            });
+            menuGrids.forEach(grid => {
+                grid.style.display = '';
             });
         }
     }
